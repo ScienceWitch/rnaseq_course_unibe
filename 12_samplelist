@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH --time=00:01:00
+#SBATCH --mem=500M
+#SBATCH --cpus-per-task=1
+#SBATCH --job-name=12_samplelist
+# Redirect output and error to the parent directory's 'output' folder
+#SBATCH --output=../rnaseq_course_unibe/output/1_samplelist.tsv   # Standard output
+#SBATCH --error=../rnaseq_course_unibe/logfiles/1_samplelist/%x-%j.err    # Standard error
+#SBATCH --partition=pibu_el8
+
+FASTQ_FOLDER=/data/courses/rnaseq_course/breastcancer_de/reads
+
+for FILE in $FASTQ_FOLDER/*_*1.fastq.gz
+do 
+    PREFIX="${FILE%_*.fastq.gz}"
+    SAMPLE=`basename $PREFIX`
+    echo -e "${SAMPLE}\t$FILE\t${FILE%?.fastq.gz}2.fastq.gz" 
+done

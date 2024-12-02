@@ -1,0 +1,37 @@
+#!/bin/bash
+
+#----------Cluster specification----------
+#SBATCH --job-name="2_fastqc"
+#SBATCH --array=1-12
+#SBATCH --mail-type=fail
+#SBATCH --cpus-per-task=1
+#SBATCH --time=01:00:00
+#SBATCH --mem=1g
+#SBATCH --output=/data/users/aslesarchuk/rnaseq_course_unibe/output/2_fastqc/array_%A_%a.out
+#SBATCH --error=/data/users/aslesarchuk/rnaseq_course_unibe/logfiles/2_fastqc/array_%A_%a.err
+#SBATCH --partition=pibu_el8
+
+#*----------Variables----------
+USER='aslesarchuk'
+WORKDIR="/data/users/${USER}/rnaseq_course_unibe"
+OUTDIR="${WORKDIR}/output/2_fastqc"
+SAMPLELIST="${WORKDIR}/output/1_samplelist.tsv"
+READSPATH="/data/courses/rnaseq_course/breastcancer_de/reads"
+CONTAINERFASTQC="/containers/apptainer/fastqc-0.12.1.sif"
+
+# Read sample information from the sample list
+SAMPLE=$(awk -v line=$SLURM_ARRAY_TASK_ID 'NR==line {print $1}' $SAMPLELIST)
+READ1=$(awk -v line=$SLURM_ARRAY_TASK_ID 'NR==line {print $2}' $SAMPLELIST)
+READ2=$(awk -v line=$SLURM_ARRAY_TASK_ID 'NR==line {print $3}' $SAMPLELIST)
+
+# Debugging: Check file paths
+echo "Processing Sample: ${SAMPLE}" >> debug.log
+echo "Processing READ1: ${READ1}, READ2: ${READ2}" >> debug.log
+
+# Create output directory for this sample
+mkdir -p "${OUTDIR}/${SAMPLE}"
+
+# Run FastQC on both R1 and R2
+apptainer exec --bind ${READSPATH} ${CONTAINERFASTQC} fastqc -t 1 -o "${OUTDIR}/${SAMPLE}" "${READ1}"
+apptainer exec --bind ${READSPATH} ${CONTAINERFASTQC} fastqc -t 1 -o "${OUTDIR}/${SAMPLE}" "${READ2}"
+
